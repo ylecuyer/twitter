@@ -52,4 +52,19 @@ describe Twitter::Cursor do
       end
     end
   end
+
+  context 'empty cursor bug' do
+    before do
+      @client = Twitter::REST::Client.new(consumer_key: 'CK', consumer_secret: 'CS', access_token: 'AT', access_token_secret: 'AS')
+      stub_get('/1.1/followers/ids.json').with(query: {cursor: '-1', screen_name: 'cursor_bug'}).to_return(body: fixture('ids_list_failing_cursor.json'), headers: {content_type: 'application/json; charset=utf-8'})
+      stub_get('/1.1/followers/ids.json').with(query: {cursor: '4242', screen_name: 'cursor_bug'}).to_return(body: fixture('ids_list_failing_cursor.json'), headers: {content_type: 'application/json; charset=utf-8'})
+    end
+
+    it 'stops querying after 3 empty responses' do
+      count = 0
+      @client.follower_ids('cursor_bug').each { count += 1 }
+      expect(count).to eq(0)
+      expect(a_get('/1.1/followers/ids.json').with(query: {cursor: '4242', screen_name: 'cursor_bug'})).to have_been_made.times(2)
+    end
+  end
 end
