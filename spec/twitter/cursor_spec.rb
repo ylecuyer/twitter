@@ -20,8 +20,8 @@ describe Twitter::Cursor do
     context 'with start' do
       it 'iterates' do
         count = 0
-        @client.follower_ids('sferik').each(5) { count += 1 }
-        expect(count).to eq(1)
+        @client.follower_ids('sferik').each(2) { count += 1 }
+        expect(count).to eq(4)
       end
     end
   end
@@ -47,8 +47,8 @@ describe Twitter::Cursor do
     context 'with start' do
       it 'iterates' do
         count = 0
-        @client.follower_ids('sferik').each(5) { count += 1 }
-        expect(count).to eq(1)
+        @client.follower_ids('sferik').each(2) { count += 1 }
+        expect(count).to eq(4)
       end
     end
   end
@@ -57,14 +57,14 @@ describe Twitter::Cursor do
     before do
       @client = Twitter::REST::Client.new(consumer_key: 'CK', consumer_secret: 'CS', access_token: 'AT', access_token_secret: 'AS')
       stub_get('/1.1/followers/ids.json').with(query: {cursor: '-1', screen_name: 'cursor_bug'}).to_return(body: fixture('ids_list_failing_cursor.json'), headers: {content_type: 'application/json; charset=utf-8'})
-      stub_get('/1.1/followers/ids.json').with(query: {cursor: '4242', screen_name: 'cursor_bug'}).to_return(body: fixture('ids_list_failing_cursor.json'), headers: {content_type: 'application/json; charset=utf-8'})
     end
 
-    it 'stops querying after 3 empty responses' do
+    it 'stops querying after 1 empty responses' do
       count = 0
       @client.follower_ids('cursor_bug').each { count += 1 }
       expect(count).to eq(0)
-      expect(a_get('/1.1/followers/ids.json').with(query: {cursor: '4242', screen_name: 'cursor_bug'})).to have_been_made.times(2)
+      expect(a_get('/1.1/followers/ids.json').with(query: {cursor: '-1', screen_name: 'cursor_bug'})).to have_been_made.times(1)
+      expect(a_get('/1.1/followers/ids.json').with(query: {cursor: '4242', screen_name: 'cursor_bug'})).not_to have_been_made
     end
   end
 end

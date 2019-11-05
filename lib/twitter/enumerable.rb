@@ -2,7 +2,7 @@ module Twitter
   module Enumerable
     include ::Enumerable
 
-    EMPTY_RESPONSE_LIMIT = 3
+    EMPTY_RESPONSE_LIMIT = 1
 
     # @return [Enumerator]
     def each(start = 0, without_new = 0)
