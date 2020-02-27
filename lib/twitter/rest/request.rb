@@ -10,7 +10,7 @@ require 'twitter/utils'
 
 module Twitter
   module REST
-    class Request
+    class Request # rubocop:disable Metrics/ClassLength
       include Twitter::Utils
       BASE_URL = 'https://api.twitter.com'.freeze
       attr_accessor :client, :headers, :options, :path, :rate_limit,
@@ -25,11 +25,11 @@ module Twitter
       def initialize(client, request_method, path, options = {}, params = nil)
         @client = client
         @uri = Addressable::URI.parse(path.start_with?('http') ? path : BASE_URL + path)
-        multipart_options = params ? params : options
+        multipart_options = params || options
         set_multipart_options!(request_method, multipart_options)
         @path = uri.path
         @options = options
-        @options_key = {get: :params, json_post: :json, delete: :params, json_put: :json}[request_method] || :form
+        @options_key = {get: :params, json_post: :json, json_put: :json, delete: :params}[request_method] || :form
         @params = params
       end
 
@@ -69,15 +69,14 @@ module Twitter
       def set_multipart_options!(request_method, options)
         if %i[multipart_post json_post].include?(request_method)
           merge_multipart_file!(options) if request_method == :multipart_post
+          options = {}
           @request_method = :post
-          @headers = Twitter::Headers.new(@client, @request_method, @uri).request_headers
-        elsif %i[json_put].include?(request_method)
+        elsif request_method == :json_put
           @request_method = :put
-          @headers = Twitter::Headers.new(@client, @request_method, @uri, options || {}).request_headers
         else
           @request_method = request_method
-          @headers = Twitter::Headers.new(@client, @request_method, @uri, options).request_headers
         end
+        @headers = Twitter::Headers.new(@client, @request_method, @uri, options).request_headers
       end
 
       def content_type(basename)
@@ -96,6 +95,7 @@ module Twitter
       def fail_or_return_response_body(code, body, headers)
         error = error(code, body, headers)
         raise(error) if error
+
         @rate_limit = Twitter::RateLimit.new(headers)
         body
       end
@@ -144,7 +144,7 @@ module Twitter
       # @return [HTTP::Client, HTTP]
       def http_client
         client = @client.proxy ? HTTP.via(*proxy) : HTTP
-        client = client.timeout(:per_operation, connect: @client.timeouts[:connect], read: @client.timeouts[:read], write: @client.timeouts[:write]) if timeout_keys_defined
+        client = client.timeout(connect: @client.timeouts[:connect], read: @client.timeouts[:read], write: @client.timeouts[:write]) if timeout_keys_defined
         client
       end
 
