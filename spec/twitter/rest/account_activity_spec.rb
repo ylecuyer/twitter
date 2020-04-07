@@ -119,17 +119,54 @@ describe Twitter::REST::AccountActivity do
     describe '#deactivate_subscription' do
       context 'deactivate subscription' do
         before do
-          stub_delete('/1.1/account_activity/webhooks/1234567890/subscriptions/all.json').to_return(status: 204, headers: {content_type: 'application/json; charset=utf-8'})
+          @client.bearer_token = 'BT'
+          stub_delete('/1.1/account_activity/webhooks/1234567890/subscriptions/0987654321/all.json').to_return(status: 204, headers: {content_type: 'application/json; charset=utf-8'})
         end
         it 'request deactivate subscription' do
-          @client.deactivate_subscription('1234567890')
-          expect(a_delete('/1.1/account_activity/webhooks/1234567890/subscriptions/all.json').with(body: {})).to have_been_made
+          @client.deactivate_subscription('1234567890', '0987654321')
+          expect(a_delete('/1.1/account_activity/webhooks/1234567890/subscriptions/0987654321/all.json').with(body: {})).to have_been_made
         end
 
         it 'returns a webhook response' do
-          response = @client.deactivate_subscription('1234567890')
+          response = @client.deactivate_subscription('1234567890', '0987654321')
           expect(response).to eq('')
         end
+      end
+    end
+
+    describe '#count_subscriptions' do
+      before do
+        stub_get('/1.1/account_activity/subscriptions/count.json').to_return(body: fixture('account_activity_count_subscriptions.json'), headers: {content_type: 'application/json; charset=utf-8'})
+      end
+      it 'request count subscriptions' do
+        @client.count_subscriptions
+        expect(a_get('/1.1/account_activity/subscriptions/count.json').with(body: {})).to have_been_made
+      end
+
+      it 'returns a webhook response' do
+        response = @client.count_subscriptions
+        expect(response).to be_a Hash
+        expect(response[:account_name]).to be_a String
+        expect(response[:subscriptions_count]).to be_a String
+        expect(response[:provisioned_count]).to be_a String
+      end
+    end
+
+    describe '#list_subscriptions' do
+      before do
+        stub_get('/1.1/account_activity/webhooks/1234567890/subscriptions/all/list.json').to_return(body: fixture('account_activity_list_subscriptions.json'), headers: {content_type: 'application/json; charset=utf-8'})
+      end
+      it 'request list of subscriptions' do
+        @client.list_subscriptions('1234567890')
+        expect(a_get('/1.1/account_activity/webhooks/1234567890/subscriptions/all/list.json').with(body: {})).to have_been_made
+      end
+
+      it 'returns a webhook response' do
+        response = @client.list_subscriptions('1234567890')
+        expect(response).to be_a Hash
+        expect(response[:environment]).to be_a String
+        expect(response[:application_id]).to be_a String
+        expect(response[:subscriptions]).to be_a Array
       end
     end
   end
@@ -244,17 +281,37 @@ describe Twitter::REST::AccountActivity do
     describe '#deactivate_subscription' do
       context 'deactivate subscription' do
         before do
-          stub_delete('/1.1/account_activity/all/env_name/subscriptions.json').to_return(status: 204, headers: {content_type: 'application/json; charset=utf-8'})
+          allow(@client).to receive(:user_token?).and_return(false)
+          @client.bearer_token = 'BT'
+          stub_delete('/1.1/account_activity/all/1234567890/subscriptions/0987654321.json').to_return(status: 204, headers: {content_type: 'application/json; charset=utf-8'})
         end
         it 'request deactivate subscription' do
-          @client.deactivate_subscription('env_name')
-          expect(a_delete('/1.1/account_activity/all/env_name/subscriptions.json').with(body: {})).to have_been_made
+          @client.deactivate_subscription('1234567890', '0987654321')
+          expect(a_delete('/1.1/account_activity/all/1234567890/subscriptions/0987654321.json').with(body: {})).to have_been_made
         end
 
         it 'returns a webhook response' do
-          response = @client.deactivate_subscription('env_name')
+          response = @client.deactivate_subscription('1234567890', '0987654321')
           expect(response).to eq('')
         end
+      end
+    end
+
+    describe '#count_subscriptions' do
+      before do
+        stub_get('/1.1/account_activity/all/subscriptions/count.json').to_return(body: fixture('account_activity_count_subscriptions.json'), headers: {content_type: 'application/json; charset=utf-8'})
+      end
+      it 'request count subscriptions' do
+        @client.count_subscriptions
+        expect(a_get('/1.1/account_activity/all/subscriptions/count.json').with(body: {})).to have_been_made
+      end
+
+      it 'returns a webhook response' do
+        response = @client.count_subscriptions
+        expect(response).to be_a Hash
+        expect(response[:account_name]).to be_a String
+        expect(response[:subscriptions_count]).to be_a String
+        expect(response[:provisioned_count]).to be_a String
       end
     end
   end

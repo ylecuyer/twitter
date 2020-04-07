@@ -21,7 +21,7 @@ module Twitter
       # @param url [String] Encoded URL for the callback endpoint.
       def create_webhook(url, env_name = nil)
         if enterprise_api
-          perform_request(:post, "/1.1/account_activity/webhooks.json", url: url)
+          perform_request(:post, '/1.1/account_activity/webhooks.json', url: url)
         else
           perform_request(:post, "/1.1/account_activity/all/#{env_name}/webhooks.json", url: url)
         end
@@ -38,7 +38,7 @@ module Twitter
       # @param env_name [String] Environment Name.
       def list_webhooks(env_name = nil)
         if enterprise_api
-          perform_request(:get, "/1.1/account_activity/webhooks.json")
+          perform_request(:get, '/1.1/account_activity/webhooks.json')
         else
           perform_request(:get, "/1.1/account_activity/all/#{env_name}/webhooks.json")
         end
@@ -118,15 +118,49 @@ module Twitter
       # @see https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/api-reference/aaa-enterprise#delete-account-activity-all-env-name-subscriptions
       # @note Deactivate a subscription, Users events will not be sent to the app
       # @rate_limited Yes
-      # @authentication Requires user context - all consumer and access tokens
+      # @authentication Requires application context
       # @raise [Twitter::Error::Unauthorized] Error raised when supplied user credentials are not valid.
       # @return [nil]
       # @param env_name_or_webhook_id [String] Environment Name or Webhook Id
-      def deactivate_subscription(env_name_or_webhook_id)
+      # @param user_id [String] Id of the user to unsubscribe
+      def deactivate_subscription(env_name_or_webhook_id, user_id)
         if enterprise_api
-          perform_request(:delete, "/1.1/account_activity/webhooks/#{env_name_or_webhook_id}/subscriptions/all.json")
+          perform_request(:delete, "/1.1/account_activity/webhooks/#{env_name_or_webhook_id}/subscriptions/#{user_id}/all.json")
         else
-          perform_request(:delete, "/1.1/account_activity/all/#{env_name_or_webhook_id}/subscriptions.json")
+          perform_request(:delete, "/1.1/account_activity/all/#{env_name_or_webhook_id}/subscriptions/#{user_id}.json")
+        end
+      end
+
+      # Returns the count of subscriptions that are currently active on your account for all activities.
+      # @see https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/api-reference/aaa-premium#get-account-activity-all-subscriptions-count
+      # @see https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/api-reference/aaa-enterprise#get-account-activity-all-subscriptions-count
+      # @note Gives the number of subscriptions to an app
+      # @rate_limited yes
+      # @authentication Requires application context
+      # @raise [Twitter::Error::Unauthorized] Error raised when supplied user credentials are not valid.
+      # @return [Hash]
+      def count_subscriptions
+        if enterprise_api
+          perform_request(:get, '/1.1/account_activity/subscriptions/count.json')
+        else
+          perform_request(:get, '/1.1/account_activity/all/subscriptions/count.json')
+        end
+      end
+
+      # Returns a list of the current All Activity type subscriptions.
+      # @see https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/api-reference/aaa-premium#get-account-activity-all-env-name-subscriptions-list
+      # @see https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/api-reference/aaa-enterprise#get-account-activity-all-env-name-subscriptions-list
+      # @note Gives list of subscriptions to an app
+      # @rate_limited yes
+      # @authentication Requires application context
+      # @raise [Twitter::Error::Unauthorized] Error raised when supplied user credentials are not valid.
+      # @return [Hash]
+      # @param env_name_or_webhook_id [String] Environment Name or Webhook Id
+      def list_subscriptions(env_name_or_webhook_id)
+        if enterprise_api
+          perform_request(:get, "/1.1/account_activity/webhooks/#{env_name_or_webhook_id}/subscriptions/all/list.json")
+        else
+          perform_request(:get, "/1.1/account_activity/all/#{env_name_or_webhook_id}/subscriptions/list.json")
         end
       end
     end
