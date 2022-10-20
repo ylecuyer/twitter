@@ -5,7 +5,7 @@ module Twitter
     EMPTY_RESPONSE_LIMIT = 1
 
     # @return [Enumerator]
-    def each(start = 0, without_new = 0)
+    def each(start = 0, without_new = 0, &block)
       return to_enum(:each, start) unless block_given?
       empty_response = true
       Array(@collection[start..-1]).each do |element|
@@ -17,7 +17,7 @@ module Twitter
         return self if without_new >= EMPTY_RESPONSE_LIMIT
         start = [@collection.size, start].max
         fetch_next_page
-        each(start, without_new, &Proc.new)
+        each(start, without_new, &block)
       end
       self
     end
